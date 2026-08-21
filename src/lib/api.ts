@@ -27,13 +27,52 @@ export interface User {
   phone: string;
 }
 
-export interface Conversation {
+export interface Message {
   _id: string;
-  isGroup: boolean;
-  name?: string;
-  participants: User[];
+  conversation: string;
+  sender: string | User;
+  text: string;
+  createdAt: string;
+}
+
+export interface DirectConversation {
+  _id: string;
+  type?: 'direct';
+  lastMessage?: Partial<Message>;
+  participant?: User;
+  participants?: (string | User)[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface GroupConversation {
+  _id: string;
+  type: 'group';
+  name: string;
+  createdBy: string;
+  admins: string[];
+  participants: (string | User)[];
+  lastMessage?: Partial<Message>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type Conversation = DirectConversation | GroupConversation;
+
+export async function getConversations(token: string): Promise<Conversation[]> {
+  const res = await fetch(`${BASE_URL}/conversations`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch conversations');
+  }
+
+  const result = await res.json();
+  // The API returns { data: [...] } for this endpoint
+  return result.data || [];
 }
 
 export async function searchUsers(query: string, token: string): Promise<User[]> {
@@ -65,7 +104,8 @@ export const startConversation = async (userId: string, token: string): Promise<
     throw new Error(data.error?.message || 'Failed to start conversation');
   }
   
-  return response.json();
+  const data = await response.json();
+  return { ...data, type: 'direct' };
 };
 
 export const createGroupConversation = async (name: string, participantIds: string[], token: string): Promise<Conversation> => {

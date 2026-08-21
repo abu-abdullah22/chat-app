@@ -54,7 +54,7 @@ describe('NewChatDialog', () => {
     const mockUsers = [{ _id: 'user-2', name: 'Alice', phone: '+456' }];
     mockSearchUsers.mockResolvedValue(mockUsers);
     
-    const mockConversation = { _id: 'conv-1', isGroup: false, participants: ['user-2'] };
+    const mockConversation = { _id: 'conv-1', type: 'direct', participants: ['user-2'] };
     mockStartConversation.mockResolvedValue(mockConversation);
     
     const onConversationStart = jest.fn();
@@ -72,7 +72,7 @@ describe('NewChatDialog', () => {
 
     await waitFor(() => {
       expect(mockStartConversation).toHaveBeenCalledWith('user-2', mockToken);
-      expect(onConversationStart).toHaveBeenCalledWith({ ...mockConversation, name: 'Alice' });
+      expect(onConversationStart).toHaveBeenCalledWith({ ...mockConversation, participant: mockUsers[0] });
       expect(onOpenChange).toHaveBeenCalledWith(false);
     });
   });
