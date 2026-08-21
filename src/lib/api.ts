@@ -50,8 +50,8 @@ export async function searchUsers(query: string, token: string): Promise<User[]>
   return res.json();
 }
 
-export async function startConversation(userId: string, token: string): Promise<Conversation> {
-  const res = await fetch(`${BASE_URL}/conversations`, {
+export const startConversation = async (userId: string, token: string): Promise<Conversation> => {
+  const response = await fetch(`${BASE_URL}/conversations`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -59,10 +59,29 @@ export async function startConversation(userId: string, token: string): Promise<
     },
     body: JSON.stringify({ userId }),
   });
-
-  if (!res.ok) {
-    throw new Error('Failed to start conversation');
+  
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error?.message || 'Failed to start conversation');
   }
+  
+  return response.json();
+};
 
-  return res.json();
-}
+export const createGroupConversation = async (name: string, participantIds: string[], token: string): Promise<Conversation> => {
+  const response = await fetch(`${BASE_URL}/conversations/group`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ name, participantIds }),
+  });
+  
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error?.message || 'Failed to create group');
+  }
+  
+  return response.json();
+};

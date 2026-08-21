@@ -5,13 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Conversation } from '@/lib/api';
-import { UserSearch } from '@/components/chat/UserSearch';
+import { NewChatDialog } from '@/components/chat/NewChatDialog';
+import { NewGroupDialog } from '@/components/chat/NewGroupDialog';
+import { MessageSquarePlus, Users, LogOut } from 'lucide-react';
 
 export default function ChatPage() {
   const { user, logout, isLoading } = useAuth();
   const router = useRouter();
   
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
+  const [isNewChatOpen, setIsNewChatOpen] = useState(false);
+  const [isNewGroupOpen, setIsNewGroupOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -33,16 +37,34 @@ export default function ChatPage() {
       <aside className="w-80 flex-shrink-0 border-r border-border flex flex-col">
         <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
           <h2 className="font-semibold text-lg truncate">Chats</h2>
-          <Button variant="outline" size="sm" onClick={logout}>Logout</Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" title="New Group" onClick={() => setIsNewGroupOpen(true)}>
+              <Users className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" title="New Chat" onClick={() => setIsNewChatOpen(true)}>
+              <MessageSquarePlus className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" title="Logout" onClick={logout} className="ml-1 text-muted-foreground hover:text-destructive">
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
-        <div className="p-2 flex flex-col">
-          <UserSearch 
-            onConversationStart={(conv) => setCurrentConversation(conv)} 
-          />
-        </div>
-        <div className="flex-1 border-t border-border p-4 text-center text-sm text-muted-foreground flex items-center justify-center">
+        
+        <div className="flex-1 p-4 text-center text-sm text-muted-foreground flex items-center justify-center">
           Conversations list will go here (Stage 4)
         </div>
+
+        <NewChatDialog 
+          open={isNewChatOpen} 
+          onOpenChange={setIsNewChatOpen} 
+          onConversationStart={(conv) => setCurrentConversation(conv)} 
+        />
+        
+        <NewGroupDialog 
+          open={isNewGroupOpen} 
+          onOpenChange={setIsNewGroupOpen} 
+          onConversationStart={(conv) => setCurrentConversation(conv)} 
+        />
       </aside>
 
       {/* Main Chat Area */}
