@@ -4,14 +4,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Conversation } from '@/lib/api';
+import { Conversation, Message, getMessages, sendMessage } from '@/lib/api';
 import { NewChatDialog } from '@/components/chat/NewChatDialog';
 import { NewGroupDialog } from '@/components/chat/NewGroupDialog';
 import { ConversationList } from '@/components/chat/ConversationList';
+import { MessageHistory } from '@/components/chat/MessageHistory';
+import { MessageInput } from '@/components/chat/MessageInput';
 import { MessageSquarePlus, Users, LogOut } from 'lucide-react';
 
 export default function ChatPage() {
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout, isLoading, token } = useAuth();
   const router = useRouter();
   
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
@@ -19,13 +21,48 @@ export default function ChatPage() {
   const [isNewGroupOpen, setIsNewGroupOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Messages State
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isMessagesLoading, setIsMessagesLoading] = useState(false);
+  const [messagesError, setMessagesError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!isLoading && !user) {
       router.push('/');
     }
   }, [user, isLoading, router]);
 
-  if (isLoading || !user) {
+  useEffect(() => {
+    if (!currentConversation || !token) return;
+
+    let isMounted = true;
+    const fetchConversationMessages = async () => {
+      setIsMessagesLoading(true);
+      setMessagesError(null);
+      try {
+        const data = await getMessages(currentConversation._id, token);
+        if (isMounted) {
+          setMessages(data.messages || []);
+        }
+      } catch (err: unknown) {
+        if (isMounted) {
+          setMessagesError(err instanceof Error ? err.message : 'Failed to load messages');
+        }
+      } finally {
+        if (isMounted) {
+          setIsMessagesLoading(false);
+        }
+      }
+    };
+
+    fetchConversationMessages();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentConversation, token]);
+
+  if (isLoading || !user || !token) {
     return (
       <div className="flex h-screen items-center justify-center bg-background text-foreground">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -36,6 +73,19 @@ export default function ChatPage() {
   const handleConversationStart = (conv: Conversation) => {
     setCurrentConversation(conv);
     setRefreshKey(prev => prev + 1);
+  };
+
+  const handleSendMessage = async (text: string) => {
+    if (!currentConversation) return;
+    try {
+      const newMsg = await sendMessage(currentConversation._id, text, token);
+      setMessages(prev => [...prev, newMsg]);
+      // Also trigger conversation list refresh so the lastMessage and updatedAt update!
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   };
 
   return (
@@ -77,20 +127,26 @@ export default function ChatPage() {
       </aside>
 
       {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col min-w-0">
         {currentConversation ? (
-          <div className="flex-1 flex flex-col">
-            <div className="p-4 border-b border-border bg-card">
-              <h3 className="font-semibold text-lg">
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-border bg-card shrink-0">
+              <h3 className="font-semibold text-lg truncate">
                 {currentConversation.type === 'group'
                   ? currentConversation.name
                   : (currentConversation.participant?.name || 'Direct Message')
                 }
               </h3>
             </div>
-            <div className="flex-1 p-8 flex items-center justify-center text-muted-foreground bg-muted/10">
-              Message history will go here (Stage 4/5)
-            </div>
+            
+            <MessageHistory 
+              messages={messages}
+              currentUserId={user._id}
+              isLoading={isMessagesLoading}
+              error={messagesError}
+            />
+
+            <MessageInput onSendMessage={handleSendMessage} />
           </div>
         ) : (
           <div className="flex-1 p-8 flex flex-col items-center justify-center text-muted-foreground bg-muted/10">
