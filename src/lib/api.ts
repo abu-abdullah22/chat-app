@@ -20,3 +20,49 @@ export async function loginApi(phone: string, name: string) {
   
   return res.json();
 }
+
+export interface User {
+  _id: string;
+  name: string;
+  phone: string;
+}
+
+export interface Conversation {
+  _id: string;
+  isGroup: boolean;
+  name?: string;
+  participants: User[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function searchUsers(query: string, token: string): Promise<User[]> {
+  const res = await fetch(`${BASE_URL}/users/search?q=${encodeURIComponent(query)}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to search users');
+  }
+
+  return res.json();
+}
+
+export async function startConversation(userId: string, token: string): Promise<Conversation> {
+  const res = await fetch(`${BASE_URL}/conversations`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ userId }),
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to start conversation');
+  }
+
+  return res.json();
+}

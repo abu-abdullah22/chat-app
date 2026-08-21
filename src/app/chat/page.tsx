@@ -2,12 +2,16 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Conversation } from '@/lib/api';
+import { UserSearch } from '@/components/chat/UserSearch';
 
 export default function ChatPage() {
   const { user, logout, isLoading } = useAuth();
   const router = useRouter();
+  
+  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -24,14 +28,49 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen p-8 space-y-4 bg-background text-foreground">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Welcome to Chat, {user.name}!</h1>
-        <Button variant="destructive" onClick={logout}>Sign Out</Button>
-      </div>
-      <div className="flex-1 rounded-lg border border-border p-8 flex items-center justify-center text-muted-foreground">
-        The full chat interface will be built out in the upcoming stages!
-      </div>
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
+      {/* Sidebar */}
+      <aside className="w-80 flex-shrink-0 border-r border-border flex flex-col">
+        <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
+          <h2 className="font-semibold text-lg truncate">Chats</h2>
+          <Button variant="outline" size="sm" onClick={logout}>Logout</Button>
+        </div>
+        <div className="p-2 flex flex-col">
+          <UserSearch 
+            onConversationStart={(conv) => setCurrentConversation(conv)} 
+          />
+        </div>
+        <div className="flex-1 border-t border-border p-4 text-center text-sm text-muted-foreground flex items-center justify-center">
+          Conversations list will go here (Stage 4)
+        </div>
+      </aside>
+
+      {/* Main Chat Area */}
+      <main className="flex-1 flex flex-col">
+        {currentConversation ? (
+          <div className="flex-1 flex flex-col">
+            <div className="p-4 border-b border-border bg-card">
+              <h3 className="font-semibold text-lg">
+                {currentConversation.name || 
+                  (currentConversation.participants
+                    .map(p => typeof p === 'object' && p !== null && 'name' in p ? p.name : null)
+                    .filter(Boolean).join(', ') || 'Direct Message')
+                }
+              </h3>
+            </div>
+            <div className="flex-1 p-8 flex items-center justify-center text-muted-foreground bg-muted/10">
+              Message history will go here (Stage 4/5)
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 p-8 flex flex-col items-center justify-center text-muted-foreground bg-muted/10">
+            <div className="max-w-md text-center space-y-4">
+              <h1 className="text-2xl font-bold text-foreground">Welcome, {user.name}!</h1>
+              <p>Search for a user on the left to start a new conversation, or select an existing chat.</p>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
