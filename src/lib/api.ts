@@ -12,7 +12,7 @@ export async function loginApi(phone: string, name: string) {
     try {
       const errorData = await res.json();
       errorMsg = errorData.error?.message || errorMsg;
-    } catch (e) {
+    } catch {
       // Ignore JSON parse error if response is not JSON
     }
     throw new Error(errorMsg);

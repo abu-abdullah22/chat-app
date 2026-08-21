@@ -32,7 +32,6 @@ async function run() {
         const uC = await req('POST', '/auth/login', null, { phone: `+1555000${Math.floor(Math.random()*9000)+1000}`, name: 'Charlie' });
 
         const tokenA = uA.data.token;
-        const idA = uA.data.user._id;
         const idB = uB.data.user._id;
         const idC = uC.data.user._id;
 
