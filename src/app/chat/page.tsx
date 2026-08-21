@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Conversation } from '@/lib/api';
 import { NewChatDialog } from '@/components/chat/NewChatDialog';
 import { NewGroupDialog } from '@/components/chat/NewGroupDialog';
+import { ConversationList } from '@/components/chat/ConversationList';
 import { MessageSquarePlus, Users, LogOut } from 'lucide-react';
 
 export default function ChatPage() {
@@ -16,6 +17,7 @@ export default function ChatPage() {
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [isNewGroupOpen, setIsNewGroupOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -30,6 +32,11 @@ export default function ChatPage() {
       </div>
     );
   }
+
+  const handleConversationStart = (conv: Conversation) => {
+    setCurrentConversation(conv);
+    setRefreshKey(prev => prev + 1);
+  };
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
@@ -50,20 +57,22 @@ export default function ChatPage() {
           </div>
         </div>
         
-        <div className="flex-1 p-4 text-center text-sm text-muted-foreground flex items-center justify-center">
-          Conversations list will go here (Stage 4)
-        </div>
+        <ConversationList 
+          currentConversation={currentConversation} 
+          onSelectConversation={setCurrentConversation} 
+          triggerRefresh={refreshKey}
+        />
 
         <NewChatDialog 
           open={isNewChatOpen} 
           onOpenChange={setIsNewChatOpen} 
-          onConversationStart={(conv) => setCurrentConversation(conv)} 
+          onConversationStart={handleConversationStart} 
         />
         
         <NewGroupDialog 
           open={isNewGroupOpen} 
           onOpenChange={setIsNewGroupOpen} 
-          onConversationStart={(conv) => setCurrentConversation(conv)} 
+          onConversationStart={handleConversationStart} 
         />
       </aside>
 
@@ -73,10 +82,9 @@ export default function ChatPage() {
           <div className="flex-1 flex flex-col">
             <div className="p-4 border-b border-border bg-card">
               <h3 className="font-semibold text-lg">
-                {currentConversation.name || 
-                  (currentConversation.participants
-                    .map(p => typeof p === 'object' && p !== null && 'name' in p ? p.name : null)
-                    .filter(Boolean).join(', ') || 'Direct Message')
+                {currentConversation.type === 'group'
+                  ? currentConversation.name
+                  : (currentConversation.participant?.name || 'Direct Message')
                 }
               </h3>
             </div>

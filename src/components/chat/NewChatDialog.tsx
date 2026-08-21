@@ -88,8 +88,8 @@ export function NewChatDialog({ open, onOpenChange, onConversationStart }: NewCh
     setError(null);
     try {
       const conversation = await startConversation(user._id, token);
-      if (!conversation.name && !conversation.isGroup) {
-        conversation.name = user.name;
+      if (conversation.type === 'direct' && !conversation.participant) {
+        conversation.participant = user;
       }
       onConversationStart(conversation);
       onOpenChange(false); // Close dialog

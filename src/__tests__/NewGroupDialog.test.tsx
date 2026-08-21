@@ -66,7 +66,7 @@ describe('NewGroupDialog', () => {
     const mockUsers = [{ _id: 'user-2', name: 'Alice', phone: '+456' }];
     mockSearchUsers.mockResolvedValue(mockUsers);
     
-    const mockConversation = { _id: 'conv-1', isGroup: true, name: 'My Group', participants: ['user-2'] };
+    const mockConversation = { _id: 'conv-1', type: 'group', name: 'My Group', participants: ['user-2'] };
     mockCreateGroupConversation.mockResolvedValue(mockConversation);
     
     const onConversationStart = jest.fn();
