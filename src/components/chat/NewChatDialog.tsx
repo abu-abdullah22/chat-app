@@ -6,14 +6,22 @@ import { useAuth } from '@/contexts/AuthContext';
 import { searchUsers, startConversation, User, Conversation } from '@/lib/api';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-interface UserSearchProps {
+interface NewChatDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onConversationStart: (conversation: Conversation) => void;
 }
 
-export function UserSearch({ onConversationStart }: UserSearchProps) {
+export function NewChatDialog({ open, onOpenChange, onConversationStart }: NewChatDialogProps) {
   const { token, user: currentUser } = useAuth();
   
   const [query, setQuery] = useState('');
@@ -24,8 +32,15 @@ export function UserSearch({ onConversationStart }: UserSearchProps) {
   const [error, setError] = useState<string | null>(null);
   const [startingUserId, setStartingUserId] = useState<string | null>(null);
 
+  // Capitalize first letter to work around case-sensitive API backend
+  const formattedQuery = debouncedQuery 
+    ? debouncedQuery.charAt(0).toUpperCase() + debouncedQuery.slice(1) 
+    : '';
+
   useEffect(() => {
-    if (!debouncedQuery.trim()) {
+    if (!formattedQuery.trim()) {
+      const clearResults = async () => setResults([]);
+      clearResults();
       return;
     }
 
@@ -36,7 +51,7 @@ export function UserSearch({ onConversationStart }: UserSearchProps) {
       setError(null);
       
       try {
-        const users = await searchUsers(debouncedQuery, token as string);
+        const users = await searchUsers(formattedQuery, token as string);
         if (isMounted) {
           setResults(users.filter(u => u._id !== currentUser?._id));
         }
@@ -52,7 +67,19 @@ export function UserSearch({ onConversationStart }: UserSearchProps) {
     return () => {
       isMounted = false;
     };
-  }, [debouncedQuery, token, currentUser?._id]);
+  }, [formattedQuery, token, currentUser?._id]);
+
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      const resetDialog = async () => {
+        setQuery('');
+        setResults([]);
+        setError(null);
+      };
+      resetDialog();
+    }
+  }, [open]);
 
   const handleStartConversation = async (user: User) => {
     if (startingUserId || !token) return;
@@ -61,13 +88,11 @@ export function UserSearch({ onConversationStart }: UserSearchProps) {
     setError(null);
     try {
       const conversation = await startConversation(user._id, token);
-      // Backend might return unpopulated participant IDs for 1-on-1s. 
-      // We attach the user's name locally for a smooth UX.
       if (!conversation.name && !conversation.isGroup) {
         conversation.name = user.name;
       }
       onConversationStart(conversation);
-      setQuery(''); // Clear search on success
+      onOpenChange(false); // Close dialog
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to start conversation');
     } finally {
@@ -76,21 +101,26 @@ export function UserSearch({ onConversationStart }: UserSearchProps) {
   };
 
   return (
-    <div className="flex flex-col bg-card rounded-lg border border-border overflow-hidden">
-      <div className="p-4 bg-muted/30">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search users to start chatting..." 
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-9 bg-background"
-          />
-        </div>
-      </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md gap-0 p-0 overflow-hidden bg-card border border-border">
+        <DialogHeader className="p-4 border-b border-border bg-muted/30">
+          <DialogTitle>New Chat</DialogTitle>
+          <DialogDescription className="sr-only">
+            Search for a user to start a conversation
+          </DialogDescription>
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search users..." 
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-9 bg-background"
+              autoFocus
+            />
+          </div>
+        </DialogHeader>
 
-      {debouncedQuery && (
-        <ScrollArea className="max-h-[300px] border-t border-border p-2">
+        <div className="flex-1 overflow-y-auto max-h-[300px] min-h-[100px]">
           {isSearching && (
             <div className="flex items-center justify-center p-8 text-muted-foreground">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -104,14 +134,20 @@ export function UserSearch({ onConversationStart }: UserSearchProps) {
             </div>
           )}
 
-          {!isSearching && results.length === 0 && !error && (
+          {!isSearching && formattedQuery && results.length === 0 && !error && (
             <div className="p-8 text-center text-sm text-muted-foreground">
-              No users found matching &quot;{debouncedQuery}&quot;.
+              No users found matching &quot;{query}&quot;.
+            </div>
+          )}
+          
+          {!isSearching && !formattedQuery && !error && results.length === 0 && (
+            <div className="p-8 text-center text-sm text-muted-foreground">
+              Type a name to search for users...
             </div>
           )}
 
           {!isSearching && results.length > 0 && (
-            <div className="flex flex-col gap-1 p-1">
+            <div className="flex flex-col gap-1 p-2">
               {results.map((user) => (
                 <button
                   key={user._id}
@@ -135,8 +171,8 @@ export function UserSearch({ onConversationStart }: UserSearchProps) {
               ))}
             </div>
           )}
-        </ScrollArea>
-      )}
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
