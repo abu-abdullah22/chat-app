@@ -75,6 +75,37 @@ export async function getConversations(token: string): Promise<Conversation[]> {
   return result.data || [];
 }
 
+export async function getMessages(conversationId: string, token: string): Promise<{ messages: Message[], hasMore: boolean }> {
+  const res = await fetch(`${BASE_URL}/conversations/${conversationId}/messages`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch messages');
+  }
+
+  return res.json();
+}
+
+export async function sendMessage(conversationId: string, text: string, token: string): Promise<Message> {
+  const res = await fetch(`${BASE_URL}/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ conversationId, text }),
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to send message');
+  }
+
+  return res.json();
+}
+
 export async function searchUsers(query: string, token: string): Promise<User[]> {
   const res = await fetch(`${BASE_URL}/users/search?q=${encodeURIComponent(query)}`, {
     headers: {
