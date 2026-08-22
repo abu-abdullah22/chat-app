@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Chat App",
-  description: "Next.js Chat Application",
+  title: "NexusChat",
+  description: "Communication, Reimagined. The future of real-time messaging.",
 };
 
 export default function RootLayout({
