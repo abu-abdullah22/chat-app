@@ -1,5 +1,7 @@
 # NexusChat 
 
+**Live Demo:** [https://nexus-chat-blush.vercel.app/](https://nexus-chat-blush.vercel.app/)
+
 A modern, real-time chat application.
 
 ## Part 3: The Thought Process
