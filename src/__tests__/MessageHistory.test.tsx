@@ -8,6 +8,7 @@ describe('MessageHistory', () => {
   it('renders loading state', () => {
     const { container } = render(
       <MessageHistory 
+        conversationId="conv-1"
         messages={[]} 
         currentUserId={currentUserId} 
         isLoading={true} 
@@ -21,6 +22,7 @@ describe('MessageHistory', () => {
   it('renders error state', () => {
     render(
       <MessageHistory 
+        conversationId="conv-1"
         messages={[]} 
         currentUserId={currentUserId} 
         isLoading={false} 
@@ -33,6 +35,7 @@ describe('MessageHistory', () => {
   it('renders empty state', () => {
     render(
       <MessageHistory 
+        conversationId="conv-1"
         messages={[]} 
         currentUserId={currentUserId} 
         isLoading={false} 
@@ -62,6 +65,7 @@ describe('MessageHistory', () => {
 
     render(
       <MessageHistory 
+        conversationId="conv-1"
         messages={mockMessages} 
         currentUserId={currentUserId} 
         isLoading={false} 

@@ -36,29 +36,39 @@ export default function ChatPage() {
     if (!currentConversation || !token) return;
 
     let isMounted = true;
-    const fetchConversationMessages = async () => {
-      setIsMessagesLoading(true);
-      setMessagesError(null);
+    const fetchConversationMessages = async (showLoading = true) => {
+      if (showLoading) setIsMessagesLoading(true);
+      if (showLoading) setMessagesError(null);
       try {
         const data = await getMessages(currentConversation._id, token);
         if (isMounted) {
-          setMessages(data.messages || []);
+          // Sort messages chronologically (oldest first, newest at the bottom)
+          const messagesArray = data.messages || [];
+          const sortedMessages = [...messagesArray].sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          setMessages(sortedMessages);
         }
       } catch (err: unknown) {
-        if (isMounted) {
+        if (isMounted && showLoading) {
           setMessagesError(err instanceof Error ? err.message : 'Failed to load messages');
         }
       } finally {
-        if (isMounted) {
+        if (isMounted && showLoading) {
           setIsMessagesLoading(false);
         }
       }
     };
 
-    fetchConversationMessages();
+    fetchConversationMessages(true);
+
+    const intervalId = setInterval(() => {
+      fetchConversationMessages(false);
+    }, 3000);
 
     return () => {
       isMounted = false;
+      clearInterval(intervalId);
     };
   }, [currentConversation, token]);
 
@@ -140,6 +150,7 @@ export default function ChatPage() {
             </div>
             
             <MessageHistory 
+              conversationId={currentConversation._id}
               messages={messages}
               currentUserId={user._id}
               isLoading={isMessagesLoading}
