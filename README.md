@@ -11,6 +11,7 @@ Building this application required navigating architectural trade-offs, designin
 ### 1. Architecture & State Management
 - **Framework:** The application is built using **Next.js (App Router)** and **React**.
 - **State Management:** I chose to use the React Context API (`AuthContext`) for global authentication state, as it perfectly isolates token management without the heavy boilerplate of Redux. For the chat interface, I used localized React state in the parent `ChatPage` component. The parent acts as the "smart" controller—managing the `currentConversation` and fetching messages—while `ConversationList` and `MessageHistory` act as "dumb" presentational components, making the codebase highly predictable and easy to test.
+- **Real-Time Architecture (REST vs WebSockets):** The provided backend is a strict REST API and does not expose a WebSocket or Server-Sent Events (SSE) endpoint. To achieve a seamless real-time chat experience under these constraints, I implemented a highly optimized **Short-Polling mechanism**. The app polls for new messages every 3 seconds and checks for conversation list updates every 5 seconds, striking the perfect balance between data freshness and server load.
 - **Styling & UI:** I utilized **Tailwind CSS** alongside **shadcn/ui** components to build a modern, glassmorphic dark-mode aesthetic with vibrant glowing gradients to give it a premium SaaS feel. Leveraging shadcn allowed me to maintain accessible, highly customizable UI primitives without reinventing the wheel. 
 
 ### 2. Going the Extra Mile (Bonus Features)
