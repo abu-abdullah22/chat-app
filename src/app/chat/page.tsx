@@ -10,7 +10,7 @@ import { NewGroupDialog } from '@/components/chat/NewGroupDialog';
 import { ConversationList } from '@/components/chat/ConversationList';
 import { MessageHistory } from '@/components/chat/MessageHistory';
 import { MessageInput } from '@/components/chat/MessageInput';
-import { MessageSquarePlus, Users, LogOut } from 'lucide-react';
+import { MessageSquarePlus, Users, LogOut, ArrowLeft } from 'lucide-react';
 
 export default function ChatPage() {
   const { user, logout, isLoading, token } = useAuth();
@@ -101,7 +101,7 @@ export default function ChatPage() {
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-80 flex-shrink-0 border-r border-border flex flex-col">
+      <aside className={`flex-shrink-0 border-r border-border flex-col ${currentConversation ? 'hidden md:flex' : 'flex'} w-full md:w-80`}>
         <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
           <h2 className="font-semibold text-lg truncate">Chats</h2>
           <div className="flex items-center gap-1">
@@ -137,10 +137,18 @@ export default function ChatPage() {
       </aside>
 
       {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className={`flex-1 flex-col min-w-0 ${currentConversation ? 'flex' : 'hidden md:flex'}`}>
         {currentConversation ? (
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-border bg-card shrink-0">
+            <div className="p-4 border-b border-border bg-card shrink-0 flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="md:hidden shrink-0 -ml-2 text-muted-foreground hover:text-foreground" 
+                onClick={() => setCurrentConversation(null)}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
               <h3 className="font-semibold text-lg truncate">
                 {currentConversation.type === 'group'
                   ? currentConversation.name
