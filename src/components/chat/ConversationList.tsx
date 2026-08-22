@@ -23,9 +23,9 @@ export function ConversationList({ currentConversation, onSelectConversation, tr
 
     let isMounted = true;
 
-    const fetchConversations = async () => {
-      setIsLoading(true);
-      setError(null);
+    const fetchConversations = async (showLoading = true) => {
+      if (showLoading) setIsLoading(true);
+      if (showLoading) setError(null);
       try {
         const data = await getConversations(token);
         if (isMounted) {
@@ -38,18 +38,23 @@ export function ConversationList({ currentConversation, onSelectConversation, tr
           setConversations(sorted);
         }
       } catch (err: unknown) {
-        if (isMounted) {
+        if (isMounted && showLoading) {
           setError(err instanceof Error ? err.message : 'Failed to load conversations');
         }
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted && showLoading) setIsLoading(false);
       }
     };
 
-    fetchConversations();
+    fetchConversations(true);
+
+    const intervalId = setInterval(() => {
+      fetchConversations(false);
+    }, 5000);
 
     return () => {
       isMounted = false;
+      clearInterval(intervalId);
     };
   }, [token, triggerRefresh]);
 

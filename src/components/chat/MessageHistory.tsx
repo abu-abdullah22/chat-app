@@ -4,21 +4,33 @@ import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface MessageHistoryProps {
+  conversationId: string;
   messages: Message[];
   currentUserId: string;
   isLoading: boolean;
   error: string | null;
 }
 
-export function MessageHistory({ messages, currentUserId, isLoading, error }: MessageHistoryProps) {
+export function MessageHistory({ conversationId, messages, currentUserId, isLoading, error }: MessageHistoryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const previousConversationId = useRef<string>(conversationId);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      // We consider the user "near the bottom" if they are within 150px of the bottom
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+      
+      const isNewConversation = previousConversationId.current !== conversationId;
+      
+      if (isNewConversation || isNearBottom) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+      
+      previousConversationId.current = conversationId;
     }
-  }, [messages]);
+  }, [messages, conversationId]);
 
   if (isLoading) {
     return (
