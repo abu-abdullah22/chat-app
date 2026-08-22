@@ -12,6 +12,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV BUILD_STANDALONE="true"
 RUN npm run build
 
 # Production image, copy all the files and run next
