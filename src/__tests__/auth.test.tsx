@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import LoginPage from '@/app/page';
+import LoginPage from '@/app/login/page';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { loginApi } from '@/lib/api';
 
